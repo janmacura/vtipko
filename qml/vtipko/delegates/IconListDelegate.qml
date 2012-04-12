@@ -1,32 +1,37 @@
 import QtQuick 1.1
-import "../js/utils.js" as Util
 import com.nokia.symbian 1.1
+import "../js/utils.js" as Util
+import "../js/theme.js" as Theme
 
 Item {
     id: delegate
 
     width: ListView.view.width
-    height: Math.max(icon.height, label.height) + platformStyle.paddingSmall
 
     property string iconPath: ""
     property string text: ""
     property string url: ""
 
+    signal clicked
+
     Image {
         id: icon
         source: delegate.iconPath != "" ? Util.getImageFolder(false) + delegate.iconPath : ""
         anchors.verticalCenter: parent.verticalCenter
-        width: source != "" ? 50 : 0
+        width: source != "" ? 30 : 0
+        smooth: true
+        fillMode: Image.PreserveAspectFit
     }
 
     Label {
         id: label
         anchors.left: icon.right
-        anchors.leftMargin: icon.source != "" ? platformStyle.paddingMedium : 0
+        anchors.leftMargin: icon.source != "" ? Theme.paddingMedium : 0
         anchors.right: parent.right
-        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-        text: qsTr(delegate.text);
-        color: delegate.url != "" ? Util.fontColorGreen : Util.fontColorGray
+        wrapMode: Text.NoWrap
+        elide: Text.ElideRight
+        text: delegate.text;
+        color: delegate.url != "" ? Theme.fontColorGreen : Theme.fontColorGray
         font.underline: delegate.url != "" ? true : false
         anchors.verticalCenter: parent.verticalCenter
     }
@@ -35,8 +40,7 @@ Item {
         enabled: delegate.url != "" ? true : false
         anchors.fill: parent
         onClicked: {
-            console.log(delegate.url);
-            Qt.openUrlExternally(delegate.url);
+            delegate.clicked();
         }
     }
 }

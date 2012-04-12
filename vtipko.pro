@@ -1,12 +1,18 @@
 # Add more folders to ship with the application, here
 folder_01.source = qml/vtipko
 folder_01.target = qml
-DEPLOYMENTFOLDERS = folder_01
+#DEPLOYMENTFOLDERS += folder_01
+
+folder_02.source = qml/OfflineStorage
+folder_02.target = qml
+DEPLOYMENTFOLDERS += folder_02
+
+QT += sql
 
 # Additional import path used to resolve QML modules in Creator's code model
 QML_IMPORT_PATH =
 
-symbian:TARGET.UID3 = 0xE3EE4729
+symbian:TARGET.UID3 = 0xE2803BF9 #0x200627e9
 
 # Smart Installer package's UID
 # This UID is from the protected range and therefore the package will
@@ -16,7 +22,17 @@ symbian:TARGET.UID3 = 0xE3EE4729
 #symbian:DEPLOYMENT.installer_header = 0x2002CCCF
 
 # Allow network access on Symbian
-symbian:TARGET.CAPABILITY += NetworkServices
+symbian {
+    TARGET.CAPABILITY += NetworkServices #SwEvent
+
+    my_deployment.pkg_prerules += vendorinfo
+
+    DEPLOYMENT += my_deployment
+
+    DEPLOYMENT.display_name += Vtipko
+
+    vendorinfo += "%{\"Vtipko\"}" ":\"Vtipko\""
+}
 
 # If your application uses the Qt Mobility libraries, uncomment the following
 # lines and add the respective components to the MOBILITY variable.
@@ -31,6 +47,7 @@ CONFIG += qt-components
 
 # The .cpp file which was generated for your project. Feel free to hack it.
 SOURCES += main.cpp
+RESOURCES += vtipko.qrc
 
 # Please do not modify the following two lines. Required for deployment.
 include(qmlapplicationviewer/qmlapplicationviewer.pri)

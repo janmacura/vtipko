@@ -1,6 +1,7 @@
 import QtQuick 1.1
 import com.nokia.symbian 1.1
 import "../js/utils.js" as Util
+import "../js/theme.js" as Theme
 import "../components"
 import "../delegates"
 
@@ -10,12 +11,48 @@ Page {
     ListModel {
         id: categoriesModel
         Component.onCompleted: {
+            categoriesModel.append({"category_id": -4,
+                                       "category_name": "Náhodný vtip",
+                                       "category_created": 0,
+                                       "category_edited": 0
+                                   });
+            categoriesModel.append({"category_id": -3,
+                                       "category_name": "Najnovšie vtipy",
+                                       "category_created": 0,
+                                       "category_edited": 0
+                                   });
+            categoriesModel.append({"category_id": -2,
+                                       "category_name": "Najlepšie hodnotené",
+                                       "category_created": 0,
+                                       "category_edited": 0
+                                   });
+            categoriesModel.append({"category_id": -1,
+                                       "category_name": "Tvoje obľúbené",
+                                       "category_created": 0,
+                                       "category_edited": 0
+                                   });
             Util.getCategories(categoriesModel);
         }
     }
 
     AppHeader {
         id: header
+    }
+
+    function getCategoryJokesCount (category_id) {
+        switch(category_id)
+        {
+        case -4:
+            return 1;
+        case -3:
+            return Util.getNewestJokesCount();
+        case -2:
+            return Util.getBestJokesCount();
+        case -1:
+            return Util.getFavoriteJokesCount();
+        default:
+            return Util.getCategoryJokesCount(category_id);
+        }
     }
 
     ListView {
@@ -25,30 +62,33 @@ Page {
         width: parent.width
         clip: true
         model: categoriesModel
-        cacheBuffer: count * Util.listHeight
+        cacheBuffer: count * Theme.listHeight
         delegate:  CategoryListDelegate {
             id: delegate
             title: model.category_name
-            property int categoryNumber: Util.getCategoryJokesCount(model.category_id);
-            Component.onCompleted: {
-                if (categoryNumber > 0)
-                    delegate.height = Util.listHeight
-            }
-
+            arrowVisible: index < 4 && categoryNumber == 0 ? false : true
+            categoryNumber: getCategoryJokesCount(model.category_id);
             subtitle: "(" +  categoryNumber + ")";
 
             Connections {
                 target: window
                 ignoreUnknownSignals: true
                 onDataSynchronized: {
-                    delegate.subtitle = "(" +  categoryNumber + ")";
+                    delegate.categoryNumber = getCategoryJokesCount(model.category_id);
+                }
+                onFavoriteListUpdated: {
+                    delegate.categoryNumber = getCategoryJokesCount(model.category_id);
                 }
             }
 
             onClicked: {
+                var page = "";
                 if (delegate.categoryNumber > 0) {
-                    var page = window.pageStack.push(Qt.resolvedUrl("JokePage.qml"));
+                    page = window.pageStack.push(Qt.resolvedUrl("JokePage.qml"));
                     page.category_id = model.category_id
+                } else if (delegate.categoryNumber == 0 && index > 3) {
+                    page = window.pageStack.push(Qt.resolvedUrl("AddJokePage.qml"));
+                    page.category = model.category_id
                 }
             }
         }
@@ -58,6 +98,7 @@ Page {
         flickableItem: listview
         interactive: true
         anchors { right: listview.right; top: listview.top }
+        platformInverted: window.platformInverted
     }
 
     AppToolBar {
@@ -73,7 +114,7 @@ Page {
             iconSource: "toolbar/btn_refresh"
             anchors.centerIn: parent
             onClicked: {
-                Util.synchronize(window);
+                window.update();
             }
         }
         ImageButton {
@@ -90,35 +131,28 @@ Page {
         platformInverted: window.platformInverted
         content: MenuLayout {
             MenuItem {
-                text: qsTr("Pridat vtip");
+                text: "Pridať vtip";
                 platformInverted: window.platformInverted
                 onClicked: {
                     window.pageStack.push(Qt.resolvedUrl("AddJokePage.qml"));
                 }
             }
             MenuItem {
-                text: qsTr("Synchronizovat");
+                text: "Synchronizovať";
                 platformInverted: window.platformInverted
                 onClicked: {
-                    Util.synchronize(window);
+                    window.update();
                 }
             }
             MenuItem {
-                text: qsTr("O vtipkovi");
+                text: "O vtipkovi";
                 platformInverted: window.platformInverted
                 onClicked: {
                     window.pageStack.push(Qt.resolvedUrl("AboutPage.qml"));
                 }
             }
             MenuItem {
-                text: qsTr("Nastavenia");
-                platformInverted: window.platformInverted
-                onClicked: {
-                    console.log("TODO");
-                }
-            }
-            MenuItem {
-                text: qsTr("Koniec");
+                text: "Koniec";
                 platformInverted: window.platformInverted
                 onClicked: {
                     Qt.quit()

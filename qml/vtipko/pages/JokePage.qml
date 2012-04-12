@@ -2,14 +2,33 @@ import QtQuick 1.1
 import com.nokia.symbian 1.1
 import com.nokia.extras 1.1
 import "../js/utils.js" as Util
+import "../js/theme.js" as Theme
 import "../components"
 
 Page {
     id: mainPage
-    property string category_id: "";
+    property int category_id;
+    property string xhr_type: "rate"
 
     onCategory_idChanged: {
-        Util.getCategoryJokes(category_id, categoryJokesModel);
+        switch(category_id)
+        {
+        case -4:
+            Util.getRandomJoke(categoryJokesModel)
+            break;
+        case -3:
+            Util.getNewestJokes(categoryJokesModel)
+            break;
+        case -2:
+            Util.getBestJokes(categoryJokesModel);
+            break;
+        case -1:
+            Util.getFavoriteJokes(categoryJokesModel);
+            break;
+        default:
+            Util.getCategoryJokes(category_id, categoryJokesModel);
+            break;
+        }
     }
 
     AppHeader {
@@ -24,7 +43,7 @@ Page {
         id: listview
         anchors.top: header.bottom
         anchors.bottom: footer.top
-        anchors.bottomMargin: platformStyle.paddingMedium
+        anchors.bottomMargin: Theme.paddingMedium
         width: parent.width
         clip: true
         model: categoryJokesModel
@@ -40,39 +59,75 @@ Page {
                 id: jokeHeaderBg
                 anchors.top: parent.top
                 width: parent.width
-                height: column.height + 36 + 2 * platformStyle.paddingMedium
+                height: column.height + 36 + 2 * Theme.paddingMedium
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: Util.getImageFolder(false) + "common/title_bg.png"
                 border {
-                    left: 2 * platformStyle.paddingLarge
-                    right: 2* platformStyle.paddingLarge
-                    top: 2 * platformStyle.paddingLarge
-                    bottom: 2 * platformStyle.paddingLarge
+                    left: 2 * Theme.paddingLarge
+                    right: 2* Theme.paddingLarge
+                    top: 2 * Theme.paddingLarge
+                    bottom: 2 * Theme.paddingLarge
                 }
 
                 Image {
-                    id: favorite
+                    id: jokeFavorite
                     anchors.left: parent.left
-                    anchors.leftMargin: 18 + platformStyle.paddingSmall
+                    anchors.leftMargin: 18 + Theme.paddingSmall
                     anchors.top: parent.top
-                    anchors.topMargin: 18 + platformStyle.paddingMedium
+                    anchors.topMargin: 18 + Theme.paddingMedium
                     source: Util.getImageFolder(false) + "common/faves_0.png"
+                    property bool isFavorite: Util.isJokeFavorite(model.joke_id)
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            header.loading = true;
+                            var text = "";
+                            if (jokeFavorite.isFavorite) {
+                                var removed = Util.removeJokeFromFavorites(model.joke_id);
+                                jokeFavorite.isFavorite = !removed;
+                                if (removed)
+                                    text = "Vtip už nie je tvoj obľúbený."
+                            } else {
+                                var added = Util.addJokeToFavorites(model.joke_id);
+                                jokeFavorite.isFavorite = added;
+                                if (added)
+                                    text = "Vtip je odteraz tvoj obľúbený."
+                            }
+
+                            if (text != "")
+                                window.openNotification(text, true, true);
+
+                            window.favoriteListUpdated();
+
+                            mainPage.setCustom(jokeFavorite.isFavorite, jokeRating.ratingValue, "");
+                        }
+                    }
+                    states: [
+                        State {
+                            name: "favorite"
+                            when: jokeFavorite.isFavorite
+                            PropertyChanges {
+                                target: jokeFavorite
+                                source: Util.getImageFolder(false) + "common/faves_1.png"
+                            }
+                        }
+                    ]
                 }
 
                 Column {
                     id: column
-                    anchors.left: favorite.right
-                    anchors.leftMargin: platformStyle.paddingMedium
+                    anchors.left: jokeFavorite.right
+                    anchors.leftMargin: Theme.paddingMedium
                     anchors.right: parent.right
-                    anchors.rightMargin: 18 + platformStyle.paddingMedium
+                    anchors.rightMargin: 18 + Theme.paddingMedium
                     anchors.top: parent.top
-                    anchors.topMargin: 18 + platformStyle.paddingMedium
+                    anchors.topMargin: 18 + Theme.paddingMedium
 
                     Label {
                         text: model.joke_name
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         width: parent.width
-                        color: Util.fontColorBlue
+                        color: Theme.fontColorBlue
                     }
 
                     Item {
@@ -81,20 +136,20 @@ Page {
 
                         Label {
                             text: Util.getCategoryNameById(model.joke_category_id);
-                            font.pixelSize: platformStyle.fontSizeSmall
+                            font.pixelSize: Theme.fontSizeSmall
                             anchors.left: parent.left
                             anchors.right: jokeNumberText.left
-                            anchors.rightMargin: platformStyle.paddingMedium
+                            anchors.rightMargin: Theme.paddingMedium
                             elide: Text.ElideRight
-                            color: Util.fontColorGray
+                            color: Theme.fontColorGray
                         }
 
                         Label {
                             id: jokeNumberText
                             text: (delegate.ListView.view.currentIndex + 1) + " / " + categoryJokesModel.count
-                            font.pixelSize: platformStyle.fontSizeSmall
+                            font.pixelSize: Theme.fontSizeSmall
                             anchors.right: parent.right
-                            color: Util.fontColorGray
+                            color: Theme.fontColorGray
                         }
                     }
                 }
@@ -105,26 +160,26 @@ Page {
                 anchors.top: jokeHeaderBg.bottom
                 anchors.bottom: parent.bottom
                 width: parent.width
-                height: column.height + 72 + 2 * platformStyle.paddingMedium
+                height: column.height + 72 + 2 * Theme.paddingMedium
                 anchors.horizontalCenter: parent.horizontalCenter
                 source: Util.getImageFolder(false) + "common/content_bg.png"
                 border {
-                    left: 2 * platformStyle.paddingLarge
-                    right: 2* platformStyle.paddingLarge
-                    top: 2 * platformStyle.paddingLarge
-                    bottom: 2 * platformStyle.paddingLarge
+                    left: 2 * Theme.paddingLarge
+                    right: 2* Theme.paddingLarge
+                    top: 2 * Theme.paddingLarge
+                    bottom: 2 * Theme.paddingLarge
                 }
 
                 Flickable {
                     id: jokeTextFlickable
                     anchors.left: parent.left
-                    anchors.leftMargin: 18 + platformStyle.paddingMedium
+                    anchors.leftMargin: 18 + Theme.paddingMedium
                     anchors.right: parent.right
-                    anchors.rightMargin: 18 + platformStyle.paddingMedium
+                    anchors.rightMargin: 18 + Theme.paddingMedium
                     anchors.top: parent.top
-                    anchors.topMargin: 18 + platformStyle.paddingMedium
+                    anchors.topMargin: 18 + Theme.paddingMedium
                     anchors.bottom: parent.bottom
-                    anchors.bottomMargin: 56 + platformStyle.paddingMedium
+                    anchors.bottomMargin: 56 + Theme.paddingMedium
                     contentHeight: jokeText.height
                     clip: true
 
@@ -132,25 +187,28 @@ Page {
                         id: jokeText
                         width: parent.width
 
-                        text: model.joke_text
+                        text: Util.stripslashes(model.joke_text);
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        color: Util.fontColorGray
+                        color: Theme.fontColorGray
                     }
                 }
 
                 AppRatingIndicator {
+                    id: jokeRating
                     anchors.bottom: parent.bottom
                     anchors.bottomMargin: 18
                     anchors.right: parent.right
-                    anchors.rightMargin: 18 + platformStyle.paddingMedium
+                    anchors.rightMargin: 18 + Theme.paddingMedium
                     maximumValue: 5
-                    ratingValue : 3
+                    ratingValue: model.joke_rating / 100
                     onClicked: {
-                        console.log(index);
+                        header.loading = true;
                         if (index == 0 && ratingValue == 1)
                             ratingValue = 0
                         else
                             ratingValue = index + 1;
+                        var text = "Tvoje hodnotenie bolo odoslané.";
+                        setCustom(jokeFavorite.isFavorite, ratingValue, text);
                     }
                 }
 
@@ -163,18 +221,41 @@ Page {
         }
     }
 
+    function setCustom(favorite, rating, text) {
+        var params = new Object;
+        var url = "http://www.vtipko.eu/api/customdata";
+        params.sign = "test";
+        params.device = window.deviceinfo.imei;
+        params.data_id = listview.model.get(listview.currentIndex).joke_id;
+        params.custom_favorite = favorite ? 1 : 0
+        params.custom_rating  = rating * 100;
+        Util.xhrGet(url, params, text, mainPage.xhr_type, window);
+    }
+
+    Connections {
+        target: window
+        ignoreUnknownSignals: true
+        onXhrSuccess: {
+            if (success && text == mainPage.xhr_type) {
+                header.loading = false;
+            } else if (!success && text == mainPage.xhr_type) {
+                header.loading = false;
+            }
+        }
+    }
+
     Item {
         id: footer
-        width: parent.width - 2 * platformStyle.paddingMedium
+        width: parent.width - 2 * Theme.paddingMedium
         height: Math.max(shareBtn.height, previousBtn.height)
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: toolbar.top
-        anchors.bottomMargin: platformStyle.paddingMedium
+        anchors.bottomMargin: Theme.paddingMedium
 
         ImageButton {
             id: previousBtn
             anchors.left: parent.left
-            anchors.leftMargin: platformStyle.paddingMedium
+            anchors.leftMargin: Theme.paddingMedium
             anchors.verticalCenter: parent.verticalCenter
             iconSource: "common/left"
             onClicked: {
@@ -186,7 +267,7 @@ Page {
         ImageButton {
             id: shareBtn
             anchors.centerIn: parent
-            text: qsTr("Zdielat");
+            text: "Zdielať";
             onClicked: {
                 shareMenu.open();
             }
@@ -195,7 +276,7 @@ Page {
         ImageButton {
             id: nextBtn
             anchors.right: parent.right
-            anchors.rightMargin: platformStyle.paddingMedium
+            anchors.rightMargin: Theme.paddingMedium
             anchors.verticalCenter: parent.verticalCenter
             iconSource: "common/right"
             onClicked: {
@@ -215,7 +296,8 @@ Page {
             iconSource: "toolbar/btn_new"
             anchors.centerIn: parent
             onClicked: {
-                window.pageStack.push(Qt.resolvedUrl("AddJokePage.qml"));
+                var page = window.pageStack.push(Qt.resolvedUrl("AddJokePage.qml"));
+                page.category = listview.model.get(listview.currentIndex).joke_category_id
             }
         }
         ImageButton {
@@ -232,28 +314,30 @@ Page {
         platformInverted: window.platformInverted
         content: MenuLayout {
             MenuItem {
-                text: qsTr("Pridat vtip");
+                text: "Pridať vtip";
                 platformInverted: window.platformInverted
                 onClicked: {
-                    window.pageStack.push(Qt.resolvedUrl("AddJokePage.qml"));
+                    var page = window.pageStack.push(Qt.resolvedUrl("AddJokePage.qml"));
+                    page.category = listview.model.get(listview.currentIndex).joke_category_id
                 }
             }
             MenuItem {
-                text: qsTr("Nahlas");
+                text: "Nahlás";
                 platformInverted: window.platformInverted
                 onClicked: {
-                    dialog.open();
+                    var page = window.pageStack.push(Qt.resolvedUrl("ReportJokePage.qml"));
+                    page.joke_id = listview.model.get(listview.currentIndex).joke_id
                 }
             }
             MenuItem {
-                text: qsTr("O vtipkovi");
+                text: "O vtipkovi";
                 platformInverted: window.platformInverted
                 onClicked: {
                     window.pageStack.push(Qt.resolvedUrl("AboutPage.qml"));
                 }
             }
             MenuItem {
-                text: qsTr("Navrat");
+                text: "Návrat";
                 platformInverted: window.platformInverted
                 onClicked: {
                     window.pageStack.pop()
@@ -267,93 +351,49 @@ Page {
         platformInverted: window.platformInverted
         content: MenuLayout {
             MenuItem {
-                text: qsTr("Facebook");
+                text: "Facebook";
                 platformInverted: window.platformInverted
                 onClicked: {
+                    var shareUrl = getShareUrl();
+                    shareUrl = encodeURIComponent(shareUrl);
+                    var page = window.pageStack.push(Qt.resolvedUrl("WebPage.qml"));
+                    page.url = "http://m.facebook.com/sharer.php?u=" + shareUrl;
                 }
             }
             MenuItem {
-                text: qsTr("Twitter");
+                text: "Twitter";
                 platformInverted: window.platformInverted
                 onClicked: {
+                    var shareUrl = "http://twitter.com/home?status=" + getShareUrl();
+                    //var page = window.pageStack.push(Qt.resolvedUrl("WebPage.qml"));
+                    //page.url = shareUrl;
+                    Qt.openUrlExternally(shareUrl)
                 }
             }
             MenuItem {
-                text: qsTr("SMS");
+                text: "SMS";
                 platformInverted: window.platformInverted
                 onClicked: {
+                    Qt.openUrlExternally("sms:" + "?body=" + getShareUrl())
                 }
             }
             MenuItem {
-                text: qsTr("E-mail");
+                text: "E-mail";
                 platformInverted: window.platformInverted
                 onClicked: {
+                    Qt.openUrlExternally("mailto:" + "?subject=" + listview.model.get(listview.currentIndex).joke_name + "&body=" + listview.model.get(listview.currentIndex).joke_text + "\n" + getShareUrl())
                 }
             }
         }
     }
 
-    SelectionDialog {
-        id: reportSelectionDialog
-        titleText: qsTr("Vyber moznost");
-        platformInverted: window.platformInverted
-        model: ListModel {
-            ListElement { name: "Chyba vo vtipe"}
-            ListElement { name: "Nevhodny vtip"}
-            ListElement { name: "Spam"}
-            ListElement { name: "Ine"}
-        }
+    function getShareUrl() {
+        var shareUrl = "http://www.vtipko.eu/vtip/" + listview.model.get(listview.currentIndex).joke_id
+        return shareUrl;
     }
 
-    CommonDialog {
-        id: dialog
-        titleText: qsTr("Nahlasit vtip");
-        buttonTexts: ["Odoslat", "Zrusit"]
-        platformInverted: window.platformInverted
-        content: Item {
-            width: parent.width
-            height: columnDialog.height + 2 * platformStyle.paddingMedium
-
-            Column {
-                id: columnDialog
-                anchors.top: parent.top
-                anchors.topMargin: platformStyle.paddingMedium
-                width: parent.width - 2 * platformStyle.paddingMedium
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: platformStyle.paddingMedium
-
-                Column {
-                    width: parent.width
-                    spacing: platformStyle.paddingSmall
-                    Label {
-                        text: qsTr("Nahlas");
-                        platformInverted: window.platformInverted
-                    }
-                    Button {
-                        width: parent.width
-                        text: reportSelectionDialog.selectedIndex != -1 ? reportSelectionDialog.model.get(reportSelectionDialog.selectedIndex).name : qsTr("Vyber moznost");
-                        platformInverted: window.platformInverted
-                        onClicked: {
-                            reportSelectionDialog.open();
-                        }
-                    }
-                }
-                Column {
-                    width: parent.width
-                    spacing: platformStyle.paddingSmall
-                    Label {
-                        text: qsTr("Popis (nepovinne)");
-                        platformInverted: window.platformInverted
-                    }
-                    TextField {
-                        width: parent.width
-                        platformInverted: window.platformInverted
-                    }
-                }
-            }
-        }
-        onAccepted: {
-            console.log("nahlasit")
-        }
+    MouseArea {
+        anchors.fill: parent
+        enabled: header.loading
     }
 }

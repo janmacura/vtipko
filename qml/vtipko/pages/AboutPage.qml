@@ -3,6 +3,7 @@ import com.nokia.symbian 1.1
 import "../components"
 import "../delegates"
 import "../js/utils.js" as Util
+import "../js/theme.js" as Theme
 
 Page {
     id: mainPage
@@ -17,24 +18,28 @@ Page {
             icon: "common/facebook.png"
             text: "Sleduj vtipy na Facebooku"
             url: "http://www.facebook.com/vtipko"
+            type: "web"
         }
 
         ListElement {
             icon: "common/google.png"
-            text: "Vtipko aj na Google+"
-            url: "http://www.google.com/vtipko"
+            text: "Sleduj vtipy na Google+"
+            url: "https://plus.google.com/112564593456422643689"
+            type: "web"
+        }
+
+        ListElement {
+            icon: "common/twitter.png"
+            text: "Sleduj vtipy na Twitter"
+            url: "http://www.twitter.com/vtipko"
+            type: "web"
         }
 
         ListElement {
             icon: "common/ovi.png"
-            text: "Ohodnot aplikaciu v Nokia Ovi Store"
+            text: "Ohodnoť aplikáciu v Ovi Store"
             url: "http://store.ovi.com/"
-        }
-
-        ListElement {
-            icon: "common/paypal.png"
-            text: "Podpor nasu pracu"
-            url: "http://paypal.com/"
+            type: "web"
         }
     }
 
@@ -42,27 +47,38 @@ Page {
         id: model2
 
         ListElement {
+            title: "Vtipko leader: "
+            text: "Matúš Jančík"
+            url: "http://www.originals.sk"
+            type: "web"
+        }
+
+        ListElement {
             title: "Programovanie: "
-            text: "Jan Macura"
+            text: "Ján Macura"
             url: "mailto:janko.macura@gmail.com"
+            type: "mail"
         }
 
         ListElement {
             title: "Design: "
-            text: "Peter Bartos"
-            url: "mailto:hrochodyl@gmail.com"
+            text: "Peter Bartoš"
+            url: "http://www.hrochodyl.sk"
+            type: "web"
         }
 
         ListElement {
             title: "Verzia: "
             text: "1.0.0"
             url: ""
+            type: ""
         }
 
         ListElement {
-            title: "2012 "
+            title: "© 2012 "
             text: "www.vtipko.eu"
             url: "http://www.vtipko.eu"
+            type: "web"
         }
     }
 
@@ -71,16 +87,16 @@ Page {
         anchors.top: header.bottom
         anchors.bottom: toolbar.top
         width: parent.width
-        contentHeight: aboutColumn.height + 2 * platformStyle.paddingMedium
+        contentHeight: aboutColumn.height + 2 * Theme.paddingMedium
         clip: true
 
         Column {
             id: aboutColumn
             anchors.top: parent.top
-            anchors.topMargin: platformStyle.paddingMedium
-            width: parent.width - 2 * platformStyle.paddingMedium
+            anchors.topMargin: Theme.paddingMedium
+            width: parent.width - 2 * Theme.paddingMedium
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: platformStyle.paddingMedium
+            spacing: Theme.paddingMedium
 
             Image {
                 id: name
@@ -93,7 +109,7 @@ Page {
 
             ListView {
                 width: parent.width
-                height: model.count * 60
+                height: model.count * 45
                 model: model1
                 interactive: false
                 cacheBuffer: 1
@@ -101,7 +117,12 @@ Page {
                     iconPath: model.icon
                     text: model.text
                     url: model.url
-                    height: 60
+                    height: 45
+
+                    onClicked: {
+                        console.log(model.url);
+                        Qt.openUrlExternally(model.url);
+                    }
                 }
             }
 
@@ -110,12 +131,23 @@ Page {
                 model: model2
                 interactive: false
                 cacheBuffer: 1
-                height: model.count * 30
+                height: model.count * 35
                 delegate: LabelListDelegate {
                     title: model.title
                     text: model.text
                     url: model.url
-                    height: 30
+                    height: 35
+
+                    onClicked: {
+                        console.log(model.url);
+                        Qt.openUrlExternally(model.url);
+                        //                        if (model.type == "web") {
+                        //                            var page = window.pageStack.push(Qt.resolvedUrl("WebPage.qml"));
+                        //                            page.url = model.url
+                        //                        } else {
+                        //                            Qt.openUrlExternally(model.url);
+                        //                        }
+                    }
                 }
             }
         }
